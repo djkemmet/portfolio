@@ -1,0 +1,91 @@
+---
+- name: Deploy Zabbix Server (Ubuntu 20.04)
+  hosts: ZabbixServer # Target Only the ZabbixServer group which has our server
+  tasks:
+
+  # Install latest packages.
+  - name: Patch the server
+    become: yes
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
+
+  # Duh.
+  - name: 2A - Fetch the Zabbix .deb package
+    become: yes
+    ansible.builtin.shell:
+      cmd: wget https://repo.zabbix.com/zabbix/6.2/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.2-1+ubuntu20.04_all.deb
+
+  # Duh.
+  - name: 2A - Install Zabbix .deb package
+    become: yes
+    ansible.builtin.shell:
+      cmd: dpkg -i zabbix-release_6.2-1+ubuntu20.04_all.deb
+
+  # Just because...
+  - name: 2A - Update apt repository
+    become: yes
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
+
+  # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_module.html
+  - name: 2B - Install Zabbix backend, Zabbix frontend, nginx configs, sql scripts and Zabbix Agent.
+    become: yes
+    apt:
+      pkg:
+        - zabbix-server-mysql 
+        - zabbix-frontend-php 
+        - zabbix-nginx-conf 
+        - zabbix-sql-scripts 
+        - zabbix-agent
+        - python3-pymysql
+      state: latest
+      update_cache: true
+
+  # This one is a pickle cause the collating and encoding was a thing
+  # and then the staging server had to be reconfigured to to have a "staging" DBA Account. 
+    # Root account plugin changed to mysql_native_password
+    # root account password set. 
+  - name: 2C - Create the Zabbix Database
+    community.mysql.mysql_db:
+      check_implicit_admin: yes
+      name: zabbix
+      encoding: utf8mb4
+      collation: utf8mb4_bin
+      state: present
+      login_user: root
+      login_password: password
+
+  - name: 2C - Create Zabbix DB User
+    community.mysql.mysql_user:
+      login_user: root
+      login_password: password
+      name: zabbix
+      password: password
+      priv: 'zabbix.*:ALL'
+      state: present
+
+  - name: 2C - Import Initial Schema...
+    become: yes
+    ansible.builtin.shell:
+      cmd: zcat /usr/share/doc/zabbix-sql-scripts/mysql/server.sql.gz | mysql -uroot -ppassword
+
+  - name: 2D - Configure the database for zabbix server
+    become: yes
+    ansible.builtin.shell:
+      cmd: echo "DBPassword=password" >> /etc/zabbix/zabbix_server.conf
+
+  #- name: 2E - Configure Zabbix PHP Frontend - Listen Port
+  #- name: 2E - Configure Zabbix PHP Frontend - Server name 
+
+  - name: 2F - Start Zabbix server and agent processes
+    become: yes
+    ansible.builtin.shell:
+      cmd: systemctl restart zabbix-server zabbix-agent nginx php7.4-fpm && systemctl enable zabbix-server zabbix-agent nginx php7.4-fpm  
+  
+#   - name: Reboot The server
+# # Update the Server
+
+
+# Install Zabbix
