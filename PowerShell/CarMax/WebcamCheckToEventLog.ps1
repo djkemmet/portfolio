@@ -1,12 +1,12 @@
 #Requires -RunAsAdministrator
 
-$LogName = "CarMax Events"
-$LogSource = "CarMax_Scripts"
+$LogName =
+$LogSource = 
 
 # Check for and create event log on local machine.
 Get-EventLog -LogName $LogName -ErrorVariable LogCheckResult
 Switch ($LogCheckResult.Message) {
-    "The event log 'CarMax Events' on computer '.' does not exist."{
+    "The event log ' Events' on computer '.' does not exist."{
         New-EventLog -LogName $LogName -Source $LogSource
     }
 }
