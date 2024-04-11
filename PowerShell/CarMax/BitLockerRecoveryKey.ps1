@@ -7,7 +7,7 @@ function Get-BitlockerDecryptionKey([String]$Domain, [String]$Username, [Int]$Ke
     
     # E Doesn't support headless, so basically there's always going to be a window in 
     # this script's runspace.
-    Enter-SeUrl -Url 'https://bitlocker.carmax.org/helpdesk/KeyRecoveryPage.aspx' -Driver $IEBrowserWindow
+    Enter-SeUrl -Url '' -Driver $IEBrowserWindow
 
     # Find and Fill Doamin Name TextBox
     $DomainNameInput = Find-SeElement -Driver $IEBrowserWindow -Id "DomainNameTextBox"
@@ -47,4 +47,4 @@ function Get-BitlockerDecryptionKey([String]$Domain, [String]$Username, [Int]$Ke
     Return $RecoveryKey
 } # End Function
 
-Get-BitlockerDecryptionKey -Domain "kmx.local" -Username '9510900' -KeyID 87824988
+Get-BitlockerDecryptionKey -Domain "" -Username '' -KeyID 
